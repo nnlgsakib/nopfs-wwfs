@@ -1,0 +1,55 @@
+name: Tests
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master, dependency-upgrades ]
+
+env:
+  GO_VERSION: "1.23.3"
+
+jobs:
+  tests:
+    name: "Compact denylist format test suite"
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Tests
+      run: go test -v -timeout 15m -coverprofile=coverage.txt -covermode=atomic .
+
+    - name: Coverage
+      uses: codecov/codecov-action@v4
+      with:
+        directory: nopfs
+
+  check:
+    name: "Static, syntax and spelling checks"
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 2
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ env.GO_VERSION }}
+
+    - name: Install staticcheck
+      run: go install honnef.co/go/tools/cmd/staticcheck@latest
+
+    - name: Install misspell
+      run: go install github.com/client9/misspell/cmd/misspell@latest
+
+    - name: Check
+      run: make check
+
